@@ -1,0 +1,82 @@
+<html>
+  <body>
+    <button onclick="dispatch1()">dispatch1</button>
+    <button onclick="dispatch2()">dispatch2</button>
+    <button onclick="unsubscribe1()">unsubscribe1</button>
+    <button onclick="unsubscribe2()">unsubscribe2</button>
+    <div id="out"></div>
+  </body>
+  <script>
+    // 核心函数 createStore
+    const createStore = (reducer, initialState) => {
+      const store = {}
+      store.state = initialState
+      store.listeners = []
+      const dispatch = (action) => {
+        const state = reducer(store.state, action)
+        store.state = state
+        store.listeners.forEach(fn => fn(state))
+      }
+      const getState = () => store.state
+      const subscribe = (listener) => {
+        store.listeners.push(listener)
+        return () => {
+          store.listeners.splice(store.listeners.indexOf(listener), 1)
+        }
+      }
+      return {
+        getState,
+        dispatch,
+        subscribe,
+      }
+    }
+
+    // 构建reducer, action, dispatch
+
+    const reducer = (prevState, action) => {
+      const { type, payload } = action
+      if (type === 'add') {
+        return {
+          count: prevState.count + 1
+        }
+      } else {
+        return {
+          count: prevState.count - 1
+        }
+      }
+    }
+
+    const {
+      getState,
+      dispatch,
+      subscribe,
+    } = createStore(reducer, { count: 0 })
+
+    const action1 = { type: 'add' }
+    const action2 = { type: 'sub' }
+
+    const unsubscribe1 = subscribe((state) => {
+      console.warn('订阅1', state.count)
+      print(`订阅1: ${state.count}`)
+    })
+
+    const unsubscribe2 = subscribe((state) => {
+      console.warn('订阅2', state.count)
+      print(`订阅2: ${state.count}`)
+    })
+
+    const dispatch1 = () => {
+      dispatch(action1)
+    }
+
+    const dispatch2 = () => {
+      dispatch(action2)
+    }
+
+    function print(t) {
+      const target = document.querySelector('#out')
+      target.innerHTML = target.innerHTML += `<p>${t}</p>`
+    }
+
+  </script>
+</html>
